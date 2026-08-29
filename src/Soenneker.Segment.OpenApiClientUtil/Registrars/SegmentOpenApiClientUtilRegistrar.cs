@@ -13,6 +13,8 @@ public static class SegmentOpenApiClientUtilRegistrar
     /// <summary>
     /// Adds <see cref="SegmentOpenApiClientUtil"/> as a singleton service. <para/>
     /// </summary>
+    /// <param name="services">Service collection that receives the registration.</param>
+    /// <returns>The same service collection, so additional registrations can be chained.</returns>
     public static IServiceCollection AddSegmentOpenApiClientUtilAsSingleton(this IServiceCollection services)
     {
         services.AddSegmentOpenApiHttpClientAsSingleton()
@@ -24,6 +26,8 @@ public static class SegmentOpenApiClientUtilRegistrar
     /// <summary>
     /// Adds <see cref="SegmentOpenApiClientUtil"/> as a scoped service. <para/>
     /// </summary>
+    /// <param name="services">Service collection that receives the registration.</param>
+    /// <returns>The same service collection, so additional registrations can be chained.</returns>
     public static IServiceCollection AddSegmentOpenApiClientUtilAsScoped(this IServiceCollection services)
     {
         services.AddSegmentOpenApiHttpClientAsSingleton()
