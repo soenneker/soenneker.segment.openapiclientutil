@@ -1,42 +1,64 @@
 [![](https://img.shields.io/nuget/v/soenneker.segment.openapiclientutil.svg?style=for-the-badge)](https://www.nuget.org/packages/soenneker.segment.openapiclientutil/)
 [![](https://img.shields.io/github/actions/workflow/status/soenneker/soenneker.segment.openapiclientutil/publish-package.yml?style=for-the-badge)](https://github.com/soenneker/soenneker.segment.openapiclientutil/actions/workflows/publish-package.yml)
 [![](https://img.shields.io/nuget/dt/soenneker.segment.openapiclientutil.svg?style=for-the-badge)](https://www.nuget.org/packages/soenneker.segment.openapiclientutil/)
+[![](https://img.shields.io/github/actions/workflow/status/soenneker/soenneker.segment.openapiclientutil/codeql.yml?label=CodeQL&style=for-the-badge)](https://github.com/soenneker/soenneker.segment.openapiclientutil/actions/workflows/codeql.yml)
 
 # Soenneker.Segment.OpenApiClientUtil
 
-Exposes a cached OpenAPI client instance.
+A DI-ready, lazily cached Segment Public API client.
 
-## Install
+## Installation
 
 ```bash
 dotnet add package Soenneker.Segment.OpenApiClientUtil
 ```
 
-## Quick start
+## Configuration
+
+```json
+{
+  "Segment": {
+    "ApiToken": "your-segment-token"
+  }
+}
+```
+
+The default endpoint is `https://api.segmentapis.com` with `Authorization: Bearer {token}` authentication. The same optional `ClientBaseUrl`, `AuthHeaderName`, and `AuthHeaderValueTemplate` settings supported by `Soenneker.Segment.HttpClients` are honored.
+
+## Registration
 
 ```csharp
 using Soenneker.Segment.OpenApiClientUtil.Registrars;
-using Microsoft.Extensions.DependencyInjection;
 
-var services = new ServiceCollection();
-var result = services.AddSegmentOpenApiClientUtilAsSingleton();
+services.AddSegmentOpenApiClientUtilAsSingleton();
 ```
 
-Adds `SegmentOpenApiClientUtil` as a singleton service.
+Use the scoped registration for a scoped consumer:
 
-## What you get
+```csharp
+services.AddSegmentOpenApiClientUtilAsScoped();
+```
 
-- `ISegmentOpenApiClientUtil` — Exposes a cached OpenAPI client instance.
-- `SegmentOpenApiClientUtilRegistrar` — Registers the OpenAPI client utility for dependency injection.
+The scoped utility deliberately uses a singleton HTTP client provider and transport. Disposing a scope discards that utility's generated-client cache while leaving the underlying shared `HttpClient` alive.
 
-## API at a glance
+## Usage
 
-| API | What it does | Result / important behavior |
-| --- | --- | --- |
-| `SegmentOpenApiClientUtilRegistrar.AddSegmentOpenApiClientUtilAsSingleton(services)` | Adds `SegmentOpenApiClientUtil` as a singleton service. | The same service collection, so additional registrations can be chained. |
-| `SegmentOpenApiClientUtilRegistrar.AddSegmentOpenApiClientUtilAsScoped(services)` | Adds `SegmentOpenApiClientUtil` as a scoped service. | The same service collection, so additional registrations can be chained. |
+```csharp
+using Soenneker.Segment.OpenApiClient;
+using Soenneker.Segment.OpenApiClient.Models;
+using Soenneker.Segment.OpenApiClientUtil.Abstract;
 
-## Practical notes
+public sealed class SegmentSourceReader(ISegmentOpenApiClientUtil clientUtil)
+{
+    public async Task<ListSources200SegmentV1JsonResponse?> GetSources(
+        CancellationToken cancellationToken)
+    {
+        SegmentOpenApiClient client = await clientUtil.Get(cancellationToken);
+        return await client.Sources.GetAsync(cancellationToken: cancellationToken);
+    }
+}
+```
 
-- Reuse the registered client instead of constructing one per operation.
-- Dispose instances you own when their scope ends so held resources can be released.
+The generated client is created on the first `Get` call and reused for the lifetime of the utility. Endpoint and authentication configuration are captured at creation; recreate the utility and its cached transport when rotating them at runtime.
+
+Authentication is attached to requests created by the generated client and is also configured on the underlying HTTP client. Do not use `WithUrl` or the returned transport to send absolute URLs outside the configured Segment authority, because doing so can forward the configured authentication header to that host.
