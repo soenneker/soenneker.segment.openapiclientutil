@@ -14,6 +14,7 @@ using Soenneker.Utils.AsyncSingleton;
 
 namespace Soenneker.Segment.OpenApiClientUtil;
 
+/// <inheritdoc cref="ISegmentOpenApiClientUtil" />
 public sealed class SegmentOpenApiClientUtil : ISegmentOpenApiClientUtil
 {
     private readonly AsyncSingleton<SegmentOpenApiClient> _client;
