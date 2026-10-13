@@ -25,7 +25,7 @@ public sealed class SegmentOpenApiClientUtil : ISegmentOpenApiClientUtil
         {
             HttpClient httpClient = await httpClientUtil.Get(token).NoSync();
 
-            var apiKey = configuration.GetValueStrict<string>("Segment:ApiToken");
+            var apiKey = configuration.GetStringStrict("Segment:ApiToken");
             string authHeaderName = configuration["Segment:AuthHeaderName"] ?? "Authorization";
             string authHeaderValueTemplate = configuration["Segment:AuthHeaderValueTemplate"] ?? "Bearer {token}";
             string authHeaderValue = authHeaderValueTemplate.Replace("{token}", apiKey, StringComparison.Ordinal);
